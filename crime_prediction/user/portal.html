@@ -1,0 +1,313 @@
+<!-- ═══ USER PORTAL MAIN LAYOUT ═══ -->
+<div class="root" id="appRoot" style="display:none;">
+  <!-- ═══ TOPBAR ═══ -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <img id="trinetraLogo" src="" alt="Logo" class="logo-img" />
+      <div class="logo-text-col">
+        <div class="logo-text">TRINETRA</div>
+        <div class="logo-sub">AI CRIME PREDICTION · CITIZEN PORTAL</div>
+      </div>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-right">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-name" id="userGreeting">Welcome, User</div>
+      </div>
+      <div class="topbar-sep"></div>
+      <div class="notif-bell-wrap" id="userNotifBell" onclick="toggleUserNotifDrawer()" style="position:relative;margin-right:15px;cursor:pointer;display:flex;align-items:center;">
+        <span style="font-size:1.2rem;">🔔</span>
+        <span class="notif-badge" id="userNotifBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--high);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 5px;border-radius:10px;box-shadow:0 0 8px var(--high);">0</span>
+      </div>
+      <div class="topbar-sep"></div>
+      <button class="logout-btn" onclick="logoutCitizen()">Logout</button>
+    </div>
+  </div>
+
+  <!-- High Severity Alert Banner Container -->
+  <div class="high-alert-banner-container" id="highAlertBannerContainer"></div>
+
+  <!-- ═══ TAB: MAP & SIDEBAR ═══ -->
+  <div class="tab-content">
+    <!-- Map (Left Panel) -->
+    <div class="left-panel">
+      <div class="map-container">
+        <div id="leafletMap" style="width:100%;height:100%;"></div>
+        
+        <!-- Live Geolocation Coordinates HUD -->
+        <div class="coords-hud" id="coordsHUD">
+          <label>GPS Safety HUD</label>
+          <div id="coordsHUDVal">Acquiring live location...</div>
+        </div>
+
+        <!-- Location banner warning -->
+        <div class="loc-banner" id="locBanner" style="display:none;">
+          ⚠️ Enable location permissions for personalized safety alerts and live location tracking.
+        </div>
+      </div>
+    </div>
+
+    <!-- Citizen Safety Panels (Right Panel) -->
+    <div class="right-panel">
+      <!-- Section 1: Geolocation Prediction analysis -->
+      <div class="card">
+        <div class="s-label">🔮 Safety Proximity Predictor</div>
+        <div style="display:flex;align-items:center;justify-content:between;">
+          <h3 id="currentZoneName" style="font-size:1.1rem;font-weight:700;">Scanning Zone...</h3>
+          <div class="risk-badge low" id="currentZoneRisk">Low Risk</div>
+        </div>
+        
+        <!-- Safety Score Bar -->
+        <div class="safety-meter-wrap">
+          <div class="safety-meter-label">
+            <span>Area Safety Score</span>
+            <span id="safetyScoreVal" style="color:var(--low)">100/100</span>
+          </div>
+          <div class="safety-bar-bg">
+            <div class="safety-bar-fill" id="safetyScoreBar" style="width:100%;background:var(--low)"></div>
+          </div>
+        </div>
+
+        <!-- Safest Time suggestions -->
+        <div class="safest-time-card">
+          <div class="safest-time-icon">⏱</div>
+          <div class="safest-time-desc">
+            <span id="safestTimeVal">Avoid 10PM - 2AM on weekdays</span>
+            <label>Safest Time to Travel</label>
+          </div>
+        </div>
+
+        <!-- Local Hotspot Crimes -->
+        <div class="s-label" style="margin-top:14px;margin-bottom:6px;">Top Crimes Reported (Last 7 Days)</div>
+        <div class="simple-list" id="zoneTopCrimes">
+          <div class="simple-item">Loading local stats...</div>
+        </div>
+        
+        <button class="btn-primary" style="width:100%;margin-top:14px;" onclick="recalculateLocationSafety(true)">
+          🔄 Re-Analyze Safety
+        </button>
+
+        <!-- Proximity Alert Filter Toggle -->
+        <div class="setting-row" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+          <div>
+            <div style="font-weight:600;font-size:0.78rem;">Proximity Alerts Only</div>
+            <div style="font-size:0.6rem;color:var(--muted);">Receive alerts only within 1km radius</div>
+          </div>
+          <label class="switch" style="position:relative;display:inline-block;width:40px;height:22px;">
+            <input type="checkbox" id="proximityAlertsOnly" checked>
+            <span class="slider-toggle round" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--border2);transition:.4s;border-radius:34px;"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 2: Citizen NLP Reporter -->
+      <div class="card">
+        <div class="s-label">🧠 NLP Safety Reporter (Instant AI Response)</div>
+        <textarea class="nlp-textarea" id="citizenNlpInput" placeholder="Describe suspicious activity or report what you saw here... (e.g. 'I saw a pickpocket near Parul Campus Central')"></textarea>
+        <button class="btn-primary" style="width:100%;" id="btnAnalyzeReport" onclick="analyzeCitizenReport()">
+          🔬 Analyze & Report
+        </button>
+
+        <!-- Scanner loader -->
+        <div class="scanner-wrap" id="nlpScanner">
+          <span>AI Scanning Report Details</span>
+          <div class="scanner-dots">
+            <div class="scanner-dot"></div>
+            <div class="scanner-dot"></div>
+            <div class="scanner-dot"></div>
+          </div>
+        </div>
+
+        <!-- Glow outcome card -->
+        <div class="nlp-res-card" id="nlpResultCard">
+          <div class="nlp-res-title">
+            <span id="nlpResCrime">Theft Incident</span>
+            <span class="risk-badge medium" id="nlpResRisk" style="font-size:0.6rem;padding:2px 8px;">Medium</span>
+          </div>
+          <div class="nlp-res-badges">
+            <span class="nlp-pill" id="nlpResSentiment">Sentiment: Urgent</span>
+            <span class="nlp-pill" id="nlpResSeverity">Severity: Medium</span>
+          </div>
+          <div class="nlp-action" id="nlpResAction">
+            Suggested Action: Keep distance. File online report.
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Community Comments Board -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column;border-bottom:none;">
+        <div class="comments-wrap">
+          <div class="comments-header">
+            <div class="comments-title">💬 Zone Community Board (<span id="boardZoneName">General</span>)</div>
+          </div>
+          <div class="comments-feed" id="commentsFeed">
+            <!-- Render comments here -->
+          </div>
+          <div class="comment-input-wrap">
+            <div class="comment-box-row">
+              <input type="text" class="comment-input" id="newCommentInput" maxlength="200" placeholder="Post safety update on this zone..." onkeyup="checkCommentCharLimit(this)">
+              <button class="btn-primary" style="padding:6px 12px;border-radius:6px;" onclick="submitZoneComment()">Send</button>
+            </div>
+            <div class="comment-char-counter"><span id="charCount">200</span> / 200 chars</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- 1. Beautiful Login Screen (First Load) -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-card">
+    <div class="modal-header" style="justify-content:center;background:var(--bg3);">
+      <div style="text-align:center;">
+        <h2 style="font-family:'Orbitron';font-size:1.5rem;font-weight:900;letter-spacing:0.15em;background:linear-gradient(90deg, #00d2ff, #7c6ff7, #ff3860);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;">TRINETRA</h2>
+        <div style="font-size:0.6rem;color:var(--muted);letter-spacing:0.12em;font-weight:700;">AI CITIZEN SAFETY PORTAL</div>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:25px 20px;">
+      <div style="text-align:center;margin-bottom:12px;">
+        <h4 style="font-size:0.95rem;font-weight:600;">Welcome, Citizen</h4>
+        <p style="font-size:0.68rem;color:var(--muted);margin-top:4px;">Sign in with your name to access neighborhood forecasts, real-time safety scores, and local feeds.</p>
+      </div>
+      <div>
+        <label>Your Full Name</label>
+        <input type="text" id="loginName" placeholder="e.g. Sameer Shah" style="margin-top:4px;">
+      </div>
+      <div style="margin-top:10px;">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="sameer@example.com" style="margin-top:4px;">
+      </div>
+      <div style="margin-top:10px;">
+        <label>Password</label>
+        <input type="password" id="loginPassword" value="••••••••" style="margin-top:4px;">
+      </div>
+      <button class="btn-primary" style="width:100%;margin-top:20px;padding:12px;font-size:0.85rem;" onclick="loginCitizen()">
+        🔐 Enter Citizen Portal
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Sleek Suggest a Feature Panel -->
+<div class="modal-overlay" id="suggestModal" style="display:none;">
+  <div class="modal-card">
+    <!-- Main Modal Form -->
+    <div id="suggestModalForm">
+      <div class="modal-header">
+        <h3>💡 Suggest a Portal Feature</h3>
+        <button class="close-btn" onclick="toggleSuggestModal(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Category</label>
+        <select id="sugCategory">
+          <option value="UI/UX">UI / UX Design</option>
+          <option value="New Feature">New Safety Feature</option>
+          <option value="Bug Report">Report a Bug</option>
+          <option value="Data Accuracy">Data Accuracy Feedback</option>
+          <option value="Other">Other Category</option>
+        </select>
+        
+        <label style="margin-top:6px;">Your Suggestion</label>
+        <textarea id="sugDescription" placeholder="Describe the feature or detail your suggestion here..." style="height:100px;resize:none;"></textarea>
+        
+        <label style="margin-top:6px;">Priority Level</label>
+        <div class="pill-group" id="sugPriorityGroup">
+          <div class="pill-btn active" onclick="setSuggestPriority('Low')">Low</div>
+          <div class="pill-btn" onclick="setSuggestPriority('Medium')">Medium</div>
+          <div class="pill-btn" onclick="setSuggestPriority('High')">High</div>
+        </div>
+
+        <button class="btn-primary" style="width:100%;margin-top:14px;" onclick="submitSuggestion()">
+          🚀 Submit Feedback
+        </button>
+
+        <a class="suggestions-list-link" onclick="toggleSuggestionsView(true)">View Past Suggestions Log</a>
+      </div>
+    </div>
+
+    <!-- Success Checkmark screen -->
+    <div class="success-checkmark" id="suggestModalSuccess">
+      <div class="checkmark-circle">✓</div>
+      <h3 style="font-size:1.1rem;font-weight:700;">Suggestion Submitted!</h3>
+      <p style="font-size:0.72rem;color:var(--muted);margin-top:6px;max-width:260px;">Thank you for making Vadodara safer. Our administrators have received your request.</p>
+      <button class="btn-primary" style="margin-top:20px;padding:8px 24px;" onclick="resetSuggestModalState()">Done</button>
+    </div>
+
+    <!-- Scrollable past suggestions log screen -->
+    <div id="suggestModalList" style="display:none;">
+      <div class="modal-header">
+        <h3>📋 Past Feedback Suggestions</h3>
+        <button class="close-btn" onclick="toggleSuggestionsView(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="suggestions-scroll" id="pastSuggestionsScroll">
+          <!-- Suggestions rendered here -->
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:10px;" onclick="toggleSuggestionsView(false)">Back to Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 💡 Floating feedback trigger button -->
+<button class="suggest-float-btn" id="suggestFloatBtn" onclick="toggleSuggestModal(true)" style="display:none;">
+  💡 Suggest
+  <span class="suggest-badge" id="sugBadgeCount">0</span>
+</button>
+
+<!-- ═══ BROADCAST WARNING BANNER OVERLAY ═══ -->
+<div class="broadcast-warning-overlay" id="broadcastWarningOverlay" style="display:none;">
+  <div class="broadcast-warning-card">
+    <div class="warning-header">
+      <span class="warning-icon">🚨</span>
+      <span class="warning-title">CRITICAL POLICE DISPATCH ALERT</span>
+    </div>
+    <div class="warning-divider"></div>
+    <div class="warning-body">
+      <div class="warning-row">
+        <span class="warning-lbl">CRIME:</span>
+        <span class="warning-val" id="bw-type">Robbery</span>
+      </div>
+      <div class="warning-row">
+        <span class="warning-lbl">ZONE:</span>
+        <span class="warning-val" id="bw-zone">Parul Campus Central</span>
+      </div>
+      <div class="warning-row">
+        <span class="warning-lbl">SEVERITY:</span>
+        <span class="warning-val" style="color:var(--high);font-weight:800;" id="bw-risk">HIGH RISK</span>
+      </div>
+      <div class="warning-desc" id="bw-desc">
+        "An armed robbery occurred near Limda Village. Suspects fled on foot. Standby for updates."
+      </div>
+    </div>
+    <button class="btn-primary warning-ack-btn" onclick="acknowledgeBroadcastAlert()">⚠️ Acknowledge Alert & Resume</button>
+  </div>
+</div>
+
+<!-- User Notification Drawer -->
+<div class="user-notif-drawer" id="userNotifDrawer" style="display:none;">
+  <div class="drawer-header">
+    <h3>🔔 Alerts & Notifications</h3>
+    <button class="btn-primary" style="padding: 4px 10px; font-size: 0.65rem;" onclick="markAllUserNotifsAsRead()">Mark All Read</button>
+    <button class="close-btn" onclick="toggleUserNotifDrawer(false)">✕</button>
+  </div>
+  <div class="drawer-filters">
+    <div class="tab active" id="un-tab-all" onclick="filterUserNotifs('All')">All</div>
+    <div class="tab" id="un-tab-unread" onclick="filterUserNotifs('Unread')">Unread</div>
+    <div class="tab" id="un-tab-alerts" onclick="filterUserNotifs('Zone Alerts')">Alerts</div>
+    <div class="tab" id="un-tab-system" onclick="filterUserNotifs('System')">System</div>
+  </div>
+  <div class="drawer-body" id="userNotifList">
+    <!-- Cards will render here -->
+  </div>
+</div>
+
+<!-- Full-screen screen flash overlay -->
+<div class="screen-flash-overlay" id="screenFlashOverlay" style="display:none;position:fixed;inset:0;background:rgba(255,56,96,0.3);z-index:99999;pointer-events:none;"></div>
+
+<!-- Toast Container -->
+<div id="toastContainer" style="position:fixed;bottom:20px;right:20px;z-index:5000;display:flex;flex-direction:column;gap:10px;"></div>

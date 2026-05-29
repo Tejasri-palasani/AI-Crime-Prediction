@@ -1,0 +1,414 @@
+<div class="root" id="appRoot">
+  <!-- ═══ TOPBAR ═══ -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <img id="trinetraLogo" src="" alt="Logo" class="logo-img" />
+      <div class="logo-text-col">
+        <div class="logo-text">TRINETRA</div>
+        <div class="logo-sub">AI CRIME PREDICTION</div>
+      </div>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-stat"><div class="val" id="tb-total">0</div><div class="lbl">Total Incidents</div></div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-stat"><div class="val" style="color:var(--high)" id="tb-high">0</div><div class="lbl">High Risk</div></div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-stat"><div class="val" style="color:var(--med)" id="tb-med">0</div><div class="lbl">Medium</div></div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-stat"><div class="val" style="color:var(--low)" id="tb-low">0</div><div class="lbl">Low</div></div>
+    
+    <div class="topbar-sep"></div>
+    <div class="topbar-right">
+      <div class="tabs">
+        <div class="tab active" data-target="tab-map">🗺️ Map</div>
+        <div class="tab" data-target="tab-analytics">📊 Analytics</div>
+        <div class="tab" data-target="tab-alerts">🔔 Alerts</div>
+        <div class="tab" data-target="tab-nlp">🧠 NLP</div>
+      </div>
+      <div class="topbar-sep"></div>
+      <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌙</button>
+      <button class="icon-btn" id="pdfExport" title="Export PDF">📥</button>
+      <div class="topbar-sep"></div>
+      <!-- Notification Bell -->
+      <div class="notif-bell-wrap" id="notifBellWrap">
+        <button class="icon-btn" id="notifBellBtn" title="Notifications" onclick="toggleNotifDrawer()" style="position:relative;">
+          🔔
+          <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+        </button>
+        <!-- Slide-down Notification Drawer -->
+        <div class="notif-drawer" id="notifDrawer" style="display:none;">
+          <div class="notif-drawer-header">
+            <span>🔔 Alert History</span>
+            <button onclick="clearAllNotifs()" style="background:none;border:none;color:var(--muted);font-size:0.65rem;cursor:pointer;font-weight:600;">Clear All</button>
+          </div>
+          <div class="notif-list" id="notifList">
+            <div class="notif-empty">No alerts yet. System monitoring active.</div>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-sep"></div>
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div class="time-display" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: MAP ═══ -->
+  <div class="tab-content" id="tab-map">
+    <div class="left-panel">
+      <div class="map-container">
+        <div id="leafletMap" style="width:100%;height:100%;"></div>
+        <div class="map-controls">
+          <button class="map-btn active" id="btn-grid">⊞ Grid</button>
+          <button class="map-btn" id="btn-dark">🌑 Dark</button>
+          <button class="map-btn" id="btn-satellite">🛰 Sat</button>
+          <button class="map-btn" id="btn-street">🗺 Street</button>
+          <button class="map-btn" id="btn-scan" title="Click map to scan 1km radius">📡 Scan</button>
+        </div>
+        <!-- 1km Scan result card -->
+        <div class="scan-result-card" id="scanResultCard" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:0.7rem;font-weight:700;color:var(--accent);">📡 1KM RADIUS SCAN</span>
+            <button onclick="closeScanCard()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;">✕</button>
+          </div>
+          <div id="scanResultContent"></div>
+        </div>
+        <div class="time-slider-wrap">
+          <div class="ts-label">⏱ Time Replay: <span id="ts-val">Live</span></div>
+          <input type="range" id="timeSlider" min="0" max="24" value="24">
+        </div>
+        <div class="map-bottom-right-actions">
+          <button class="action-btn add-btn" onclick="openModal('placeModal')">+ Add Place</button>
+          <button class="floating-report-btn" onclick="openCrimeWizard()">🚨 REPORT CRIME</button>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <!-- Drill Down (hidden by default) -->
+      <div class="card drill-down" id="drillDownPanel" style="display:none;">
+        <div class="s-label">📍 Zone Details</div>
+        <h3 class="dd-title" id="dd-title">Zone</h3>
+        <div class="dd-risk-badge" id="dd-risk">Risk</div>
+        <div class="dd-stats">
+          <div class="dd-stat"><span id="dd-inc">0</span><label>Incidents</label></div>
+          <div class="dd-stat"><span id="dd-conf">0%</span><label>Confidence</label></div>
+        </div>
+        <div class="s-label" style="margin-top:12px;">Recent Incidents</div>
+        <div class="feed-list" id="dd-recent"></div>
+        <button class="btn-primary" style="margin-top:14px;width:100%;" onclick="closeDrillDown()">✕ Close Details</button>
+        <button class="btn-primary" style="margin-top:8px;width:100%;background:var(--accent);border:1px solid var(--accent);opacity:0.8;" onclick="dispatchDrillDownAlert()">🚨 Dispatch Proximity Alert</button>
+        <button class="btn-primary" style="margin-top:8px;width:100%;background:linear-gradient(135deg,#ff3860,#c0213b);box-shadow:0 0 16px rgba(255,56,96,0.5);border:none;" onclick="openZoneAlertModal()">📡 Send Zone Alert</button>
+        <button class="btn-primary" style="margin-top:8px;width:100%;background:var(--high);border:1px solid #ff3860;opacity:0.8;" onclick="removeCurrentPlace()">🗑️ Remove Place</button>
+      </div>
+      <!-- Default Card -->
+      <div class="card" id="mapDefaultCard">
+        <div class="s-label">🔍 Filter by Crime Type</div>
+        <div class="filter-chips" id="filterChips"></div>
+        <button class="btn-primary" id="btn-patrol" style="width:100%;margin-top:16px;">⚡ Draw Patrol Route</button>
+      </div>
+      <!-- Live Feed -->
+      <div class="card" style="flex:1;">
+        <div class="s-label">📡 Live Incident Feed</div>
+        <div class="feed-list" id="feedList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: ANALYTICS ═══ -->
+  <div class="tab-content" id="tab-analytics" style="display:none;">
+    <div class="left-panel" style="padding:20px;overflow-y:auto;background:var(--bg2);">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="s-label">📈 LSTM 7-Day Crime Forecast</div>
+        <div style="height:260px;width:100%;"><canvas id="forecastChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="s-label">📊 Crime Distribution by Type</div>
+        <div style="height:260px;width:100%;"><canvas id="barChart"></canvas></div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="card">
+        <div class="s-label">🏙 City Overview</div>
+        <div class="ov-grid">
+          <div class="ov-tile"><div class="ov-val" id="ov-total">0</div><div class="ov-lbl">Total Incidents</div></div>
+          <div class="ov-tile"><div class="ov-val" style="color:var(--accent)">6</div><div class="ov-lbl">Zones Tracked</div></div>
+          <div class="ov-tile high"><div class="ov-val" id="ov-high">0</div><div class="ov-lbl">High Risk</div></div>
+          <div class="ov-tile med"><div class="ov-val" id="ov-med">0</div><div class="ov-lbl">Medium Risk</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="s-label">🎯 Risk Distribution</div>
+        <div class="donut-wrap">
+          <div style="width:120px;height:120px;position:relative;"><canvas id="donutChart"></canvas><div class="donut-center-text" id="donutTotal">0</div></div>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="s-label">🏆 Zone Risk Ranking</div>
+        <div id="zoneList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: ALERTS ═══ -->
+  <div class="tab-content" id="tab-alerts" style="display:none;">
+    <div class="left-panel" style="padding:20px;background:var(--bg2);">
+      <div class="card" style="height:100%;display:flex;flex-direction:column;">
+        <div class="s-label">🚨 Alert History Log</div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="alert-table">
+            <thead><tr><th>Time</th><th>Zone</th><th>Trigger</th><th>Status</th></tr></thead>
+            <tbody id="alertLogBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="card">
+        <div class="s-label">⚙️ Alert Settings</div>
+        <div class="setting-row">
+          <div>
+            <div style="font-weight:600;font-size:0.82rem;">Browser Push Notifications</div>
+            <div style="font-size:0.65rem;color:var(--muted);">Send alerts to OS when risk upgrades</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="pushToggle"><span class="slider-toggle round"></span></label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div style="font-weight:600;font-size:0.82rem;">High Risk Spike Alerts</div>
+            <div style="font-size:0.65rem;color:var(--muted);">Alert on sudden incident spikes</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="spikeToggle" checked><span class="slider-toggle round"></span></label>
+        </div>
+      </div>
+      <div class="card" style="text-align:center;padding:30px;">
+        <div class="s-label" style="justify-content:center;">⏳ Next Data Refresh</div>
+        <div style="font-size:2.8rem;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);margin:12px 0;" id="refreshCountdown">60s</div>
+        <div style="font-size:0.7rem;color:var(--muted);">Connecting to Vadodara Police Data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: NLP ═══ -->
+  <div class="tab-content" id="tab-nlp" style="display:none;">
+    <div class="left-panel" style="padding:20px;background:var(--bg2);">
+      <div class="card" style="height:100%;display:flex;flex-direction:column;">
+        <div class="s-label">🧠 Police Report Analyzer (NLP)</div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:15px;line-height:1.5;">Paste raw police reports below. The NLP engine will extract crime types, sentiment, locations, and assign ICD-like tags.</p>
+        <textarea id="nlpInput" style="flex:1;width:100%;resize:none;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'Inter',sans-serif;font-size:0.85rem;line-height:1.6;" placeholder="Enter police reports here, separated by blank lines...
+
+Example:
+At approximately 11:30 pm on Saturday, officers responded to a robbery near Waghodia Crossing. The victim was held at gunpoint and had his wallet stolen. Suspect fled southbound on foot."></textarea>
+        <button class="btn-primary" style="margin-top:15px;" id="btn-analyze">🔬 Analyze Reports</button>
+      </div>
+    </div>
+    <div class="right-panel" style="background:var(--bg3);">
+      <div class="s-label" style="padding:16px 18px 0;">📋 Analysis Results</div>
+      <div id="nlpResults" style="padding:0 18px 16px;display:flex;flex-direction:column;gap:14px;margin-top:10px;">
+        <div style="text-align:center;color:var(--muted);font-size:0.82rem;margin-top:50px;">Run analysis to see extracted entities, sentiment, and tags.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODALS ═══ -->
+  <div class="modal-overlay" id="placeModal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>+ Add New Place (Zone)</h3>
+        <button class="close-btn" onclick="closeModal('placeModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Zone Name</label>
+        <input type="text" id="newPlaceName" placeholder="e.g. Limda Village">
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <div style="flex:1;"><label>Latitude</label><input type="number" step="any" id="newPlaceLat" placeholder="22.2925"></div>
+          <div style="flex:1;"><label>Longitude</label><input type="number" step="any" id="newPlaceLon" placeholder="73.3639"></div>
+        </div>
+        <label style="margin-top:10px;">Initial Risk Level</label>
+        <select id="newPlaceRisk">
+          <option value="Low">Low Risk</option>
+          <option value="Medium">Medium Risk</option>
+          <option value="High">High Risk</option>
+        </select>
+        <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="submitNewPlace()">Add Place</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="crimeModal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="color:var(--high)">⚠️ Report Crime Incident</h3>
+        <button class="close-btn" onclick="closeModal('crimeModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Zone Location</label>
+        <select id="reportCrimeZone"></select>
+        <label style="margin-top:10px;">Crime Type</label>
+        <select id="reportCrimeType">
+          <option value="Theft">Theft</option>
+          <option value="Assault">Assault</option>
+          <option value="Burglary">Burglary</option>
+          <option value="Vehicle Theft">Vehicle Theft</option>
+          <option value="Drug Offence">Drug Offence</option>
+          <option value="Vandalism">Vandalism</option>
+          <option value="Robbery">Robbery</option>
+          <option value="Fraud">Fraud</option>
+        </select>
+        <label style="margin-top:10px;">Assessed Risk</label>
+        <select id="reportCrimeRisk">
+          <option value="High">High (Immediate Action)</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <button class="btn-primary" style="width:100%;margin-top:20px;background:var(--high);" onclick="submitCrimeReport()">Submit Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div id="toastContainer" style="position:fixed;bottom:20px;right:20px;z-index:5000;display:flex;flex-direction:column;gap:10px;"></div>
+
+<!-- ═══ 3-STEP CRIME WIZARD MODAL ═══ -->
+<div class="modal-overlay" id="crimeWizardModal" style="display:none;">
+  <div class="modal-card" style="width:480px;">
+    <!-- Step Progress Indicator -->
+    <div class="wizard-steps">
+      <div class="wstep active" id="ws1"><span class="wstep-num">1</span><span class="wstep-lbl">Details</span></div>
+      <div class="wstep-line" id="wsline1"></div>
+      <div class="wstep" id="ws2"><span class="wstep-num">2</span><span class="wstep-lbl">Notify</span></div>
+      <div class="wstep-line" id="wsline2"></div>
+      <div class="wstep" id="ws3"><span class="wstep-num">3</span><span class="wstep-lbl">Dispatch</span></div>
+    </div>
+
+    <!-- STEP 1: Crime Details -->
+    <div id="wizardStep1">
+      <div class="modal-header">
+        <h3>🚨 Report Crime Incident — Step 1: Details</h3>
+        <button class="close-btn" onclick="closeModal('crimeWizardModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Crime Category</label>
+        <select id="wz-category">
+          <option value="Theft">🔓 Theft / Pickpocket</option>
+          <option value="Robbery">🔫 Robbery / Armed</option>
+          <option value="Assault">👊 Assault / Violence</option>
+          <option value="Burglary">🏠 Burglary / Break-in</option>
+          <option value="Vehicle Theft">🚗 Vehicle Theft</option>
+          <option value="Drug Offence">💊 Drug Offence</option>
+          <option value="Vandalism">🪟 Vandalism</option>
+          <option value="Suspicious Activity">👁 Suspicious Activity</option>
+        </select>
+        <label style="margin-top:10px;">Zone / Location</label>
+        <select id="wz-zone"></select>
+        <label style="margin-top:10px;">Incident Description <span style="color:var(--high);">*</span></label>
+        <textarea id="wz-desc" placeholder="Describe what happened, time, suspects, direction of escape..." style="width:100%;height:90px;resize:none;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:10px;font-family:Inter,sans-serif;font-size:0.8rem;line-height:1.5;"></textarea>
+        <label style="margin-top:10px;">Risk Level</label>
+        <div style="display:flex;gap:8px;">
+          <button class="wz-risk-btn" data-risk="Low" onclick="setWzRisk(this)">🟢 Low</button>
+          <button class="wz-risk-btn active" data-risk="High" onclick="setWzRisk(this)">🔴 High</button>
+          <button class="wz-risk-btn" data-risk="Medium" onclick="setWzRisk(this)">🟠 Medium</button>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="wizardNext(1)">Next: Notification Options →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Notification Options -->
+    <div id="wizardStep2" style="display:none;">
+      <div class="modal-header">
+        <h3>📡 Step 2: Notification & 1km Scan</h3>
+        <button class="close-btn" onclick="closeModal('crimeWizardModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="s-label">Dispatch Channels</div>
+        <div class="wz-channel-row">
+          <label class="wz-channel-check"><input type="checkbox" id="wz-push" checked> 🔔 Browser Push Notification</label>
+          <label class="wz-channel-check"><input type="checkbox" id="wz-email" checked> 📧 Email Alert (SendGrid)</label>
+          <label class="wz-channel-check"><input type="checkbox" id="wz-citizen" checked> 📱 Broadcast to Citizen Portal</label>
+        </div>
+        <div class="s-label" style="margin-top:14px;">📡 1KM Proximity Scan Results</div>
+        <div id="wizardScanResults" style="background:var(--bg3);border-radius:8px;padding:12px;border:1px solid var(--border);font-size:0.75rem;color:var(--muted);">Scanning selected zone...</div>
+        <div class="s-label" style="margin-top:14px;">Recipient Email</div>
+        <input type="email" id="wz-email-addr" placeholder="officer@vadodarapolice.gov.in" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:0.8rem;">
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn-primary" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border);" onclick="wizardBack()">← Back</button>
+          <button class="btn-primary" style="flex:2;" onclick="wizardNext(2)">Next: Preview Dispatch →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Email Preview & Dispatch -->
+    <div id="wizardStep3" style="display:none;">
+      <div class="modal-header">
+        <h3>📧 Step 3: Dispatch Confirmation</h3>
+        <button class="close-btn" onclick="closeModal('crimeWizardModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="email-preview" id="emailPreview"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="btn-primary" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border);" onclick="wizardGoToStep(2)">← Back</button>
+          <button class="btn-primary" style="flex:2;background:linear-gradient(135deg,var(--high),#c0213b);" onclick="dispatchCrimeAlert()">🚨 Dispatch Alert Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ZONE ALERT MODAL ═══ -->
+<div class="modal-overlay" id="zoneAlertModal" style="display:none;">
+  <div class="modal-card" style="max-width:520px;width:100%;">
+    <div class="modal-header">
+      <h3 style="color:var(--high);font-family:'Orbitron',sans-serif;letter-spacing:0.05em;">📡 Send Zone Alert</h3>
+      <button class="close-btn" onclick="closeModal('zoneAlertModal')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label>Zone Name (Pre-filled)</label>
+        <input type="text" id="za-zone-name" readonly style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--bg3);color:var(--accent);font-size:0.8rem;font-weight:600;cursor:default;">
+      </div>
+      <div>
+        <label>Alert Type</label>
+        <select id="za-alert-type" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:0.8rem;">
+          <option>Suspicious Activity</option>
+          <option>High Risk Spike</option>
+          <option>Police Advisory</option>
+          <option>Evacuation Notice</option>
+          <option>General Warning</option>
+        </select>
+      </div>
+      <div>
+        <label>Severity</label>
+        <div class="pill-group za-sev-group" id="za-sev-group">
+          <div class="pill-btn" onclick="setZaAlertSev(this,'Low')">Low</div>
+          <div class="pill-btn active" onclick="setZaAlertSev(this,'Medium')">Medium</div>
+          <div class="pill-btn" onclick="setZaAlertSev(this,'High')">High</div>
+        </div>
+      </div>
+      <div>
+        <label>Custom Message <span id="za-char-count" style="color:var(--muted);font-size:0.65rem;">(300 chars remaining)</span></label>
+        <textarea id="za-message" maxlength="300" placeholder="Describe the situation in detail..." style="width:100%;height:90px;resize:none;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:0.8rem;" oninput="updateZaCharCount(this)"></textarea>
+      </div>
+      <div>
+        <label>Alert Radius</label>
+        <select id="za-radius" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:0.8rem;">
+          <option value="0.5">500m</option>
+          <option value="1" selected>1km</option>
+          <option value="2">2km</option>
+          <option value="5">5km</option>
+        </select>
+      </div>
+      <div>
+        <label>Target Channels</label>
+        <div style="display:flex;gap:14px;margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;cursor:pointer;">
+            <input type="checkbox" id="za-channel-email" checked> Send Email
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;cursor:pointer;">
+            <input type="checkbox" id="za-channel-notif" checked> Send Dashboard Notification
+          </label>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--high),#c0213b);box-shadow:0 0 20px rgba(255,56,96,0.4);border:none;font-weight:700;font-size:0.9rem;letter-spacing:0.05em;" onclick="broadcastZoneAlert()">🚨 Broadcast Alert</button>
+    </div>
+  </div>
+</div>
